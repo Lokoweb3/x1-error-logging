@@ -1,0 +1,14 @@
+{
+  "name": "x1-error-logging",
+  "version": "1.0.0",
+  "description": "Structured error logging system for X1 Vault multi-agent architecture",
+  "main": "src/error-logger.js",
+  "scripts": {
+    "test": "node tests/test-logger.js",
+    "audit": "node src/self-audit.js",
+    "audit:30d": "node src/self-audit.js --days 30",
+    "audit:report": "node src/self-audit.js --output report"
+  },
+  "keywords": ["x1-vault", "error-logging", "multi-agent", "self-improvement"],
+  "license": "MIT"
+}
