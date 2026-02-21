@@ -1,0 +1,4 @@
+errors/*.json
+errors/_occurrences.json
+reports/
+node_modules/
