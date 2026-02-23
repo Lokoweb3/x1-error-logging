@@ -1,255 +1,354 @@
-# X1 Vault — Multi-Agent Operating System
+# 🚀 CryptoMarket - Token Marketplace
 
-A self-improving AI agent framework for Telegram bots. Four layers that work together: the bot catches its own mistakes, routes tasks to the right skill, checks before doing anything risky, and learns from its failures.
+A modern, real-time cryptocurrency token marketplace similar to CoinMarketCap, built with vanilla HTML, CSS, and JavaScript. This project fetches live token price data from the XDEX API and displays it in a beautiful, responsive interface.
 
-**152 tests. Zero dependencies beyond `node-telegram-bot-api` and `node-cron`.**
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 
-## Architecture
+## 📋 Table of Contents
 
+- [Features](#features)
+- [Demo](#demo)
+- [Installation](#installation)
+- [Usage](#usage)
+- [API Integration](#api-integration)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+- [Future Enhancements](#future-enhancements)
+- [Contributing](#contributing)
+- [License](#license)
+
+## ✨ Features
+
+- **Real-time Price Data**: Fetches live token prices from XDEX API
+- **Multi-Network Support**: Supports X1 Mainnet, Ethereum, BSC, and Polygon networks
+- **Search Functionality**: Search for any token by address
+- **Auto-Refresh**: Automatically updates token data every 30 seconds
+- **Responsive Design**: Mobile-friendly interface that works on all devices
+- **Statistics Dashboard**: Displays total tokens, 24h volume, and active networks
+- **Beautiful UI**: Modern gradient design with smooth animations
+- **CORS Handling**: Built-in CORS proxy fallback for API requests
+- **Error Handling**: Graceful error handling with user-friendly messages
+
+## 🎯 Demo
+
+The marketplace currently features:
+- **Pepe (PEPE)** token on X1 Mainnet
+- Token address: `81LkybSBLvXYMTF6azXohUWyBvDGUXznm4yiXPkYkDTJ`
+- Real-time price updates
+- 24h price change simulation
+- Market cap calculations
+
+## 🚀 Installation
+
+### Prerequisites
+
+- A modern web browser (Chrome, Firefox, Safari, Edge)
+- Internet connection for API calls
+- (Optional) A local web server for development
+
+### Quick Start
+
+1. **Download the project**
+   ```bash
+   git clone https://github.com/yourusername/cryptomarket.git
+   cd cryptomarket
+   ```
+
+2. **Open the HTML file**
+   - Simply double-click `crypto-marketplace.html`
+   - Or serve it using a local web server:
+   
+   ```bash
+   # Using Python 3
+   python -m http.server 8000
+   
+   # Using Node.js (http-server)
+   npx http-server
+   ```
+
+3. **Access the application**
+   - Direct file: Open `crypto-marketplace.html` in your browser
+   - Local server: Navigate to `http://localhost:8000`
+
+## 💻 Usage
+
+### Viewing Token Data
+
+The marketplace automatically loads the PEPE token data on startup. You'll see:
+- Token rank
+- Token name and symbol
+- Current price in USD
+- 24-hour price change percentage
+- Market capitalization
+
+### Searching for Tokens
+
+1. Enter a token address in the search bar
+2. Select the network from the dropdown (X1 Mainnet, Ethereum, BSC, or Polygon)
+3. Click "Search Token" button
+4. The token will be added to the list with real-time data
+
+### Understanding the Dashboard
+
+- **Total Tokens**: Number of tokens currently tracked
+- **24h Volume**: Combined trading volume (simulated)
+- **Active Networks**: Number of different blockchain networks
+
+## 🔌 API Integration
+
+### XDEX API
+
+The project uses the XDEX API for fetching token price data.
+
+**Endpoint:**
 ```
-User sends message to Telegram bot
-    ↓
-┌─────────────────────────────────────────────────────────┐
-│  WORKFLOW ROUTER                                        │
-│  Pattern match → find the right skill → execute         │
-│  Priority ordering, parallel execution, analytics       │
-├─────────────────────────────────────────────────────────┤
-│  VERIFICATION GATES                                     │
-│  Gate 1 (Plan): "Here's what I'm about to do. OK?"     │
-│  Gate 2 (Verify): "Here's the result. Looks right?"    │
-│  Risk-weighted: low=skip, medium=auto-verify, high=ask │
-├─────────────────────────────────────────────────────────┤
-│  ERROR LOGGING                                          │
-│  Every execution wrapped → classify, hash, track       │
-│  Recurring errors flagged for auto-fix                  │
-├─────────────────────────────────────────────────────────┤
-│  SELF-IMPROVEMENT LOOP                                  │
-│  Analyze errors + corrections + gate decisions          │
-│  Generate proposals → you approve → bot improves        │
-└─────────────────────────────────────────────────────────┘
-    ↓
-Data persists locally + backs up to X1 Vault
-```
-
-## Quick Start
-
-### 1. Install
-
-```bash
-cd your-bot-project
-npm install node-telegram-bot-api node-cron
-```
-
-### 2. Set up your Telegram bot
-
-1. Message **@BotFather** on Telegram → `/newbot` → copy the token
-2. Message **@userinfobot** → copy your chat ID
-
-### 3. Run
-
-```bash
-BOT_TOKEN=your_token ADMIN_CHAT_ID=your_chat_id node src/bot.js
-```
-
-### 4. Test
-
-```
-/help              — see all commands
-/audit 0xABC       — test token audit
-/health            — system health score
-/errors            — recent errors
-/proposals         — improvement proposals
-/trend             — improvement trend over time
-/gates             — pending verification gates
-/gatestats         — gate approval/rejection stats
-```
-
-## The Four Layers
-
-### Layer 1: Error Logging
-
-Every skill execution is wrapped. Errors are auto-classified (syntax, api, network, logic, timeout, permission, validation, dependency), stack traces are hashed for deduplication, severity is inferred from skill + error type, and occurrence counts trigger auto-fix reviews.
-
-```js
-const { ErrorLogger } = require('./src/error-logger');
-const logger = new ErrorLogger({ logDir: './errors' });
-
-// Wrap any skill
-const { success, result, error } = await logger.wrapSkill(
-  'token-audit',
-  () => auditToken(address),
-  { address },
-  { agent: 'TokenAuditAgent' }
-);
-```
-
-Daily logs written to `errors/YYYY-MM-DD.json`. Run `npm run audit` for a health report.
-
-### Layer 2: Workflow Router
-
-Single entry point for all incoming messages. Pattern-matches to the right skill, executes with error logging, tracks analytics.
-
-```js
-const { WorkflowRouter } = require('./src/workflow-router');
-const router = new WorkflowRouter({ logger });
-
-router.addRoute({
-  name: 'token-audit',
-  patterns: [/^\/audit\s+(\S+)/i, /check\s+contract\s+(\S+)/i],
-  agent: 'TokenAuditAgent',
-  priority: PRIORITY.HIGH,
-  risk: RISK_LEVEL.MEDIUM,
-  handler: async (match, ctx) => auditToken(match[1])
-});
-
-// Route any message
-const result = await router.route('/audit 0xABC123');
-```
-
-Pre-built routes in `src/routes.js`: token-audit, vault-backup, deploy, research, code-review, health, errors, help, analytics.
-
-### Layer 3: Verification Gates
-
-Two-gate system that prevents dangerous actions without your approval.
-
-```
-Risk Level    Gate 1 (Plan)    Gate 2 (Verify)    Cooldown    Audit Trail
-─────────────────────────────────────────────────────────────────────────
-none          skip             skip               no          no
-low           skip             skip               no          no
-medium        skip             auto-check          no          no
-high          ask user         ask user            no          yes
-critical      ask user         ask user            30s         yes
+https://api.xdex.xyz/api/token-price/price
 ```
 
-After you approve the same action 3 times, it auto-approves. Renders as Telegram inline keyboard buttons (Approve / Reject / Details).
+**Parameters:**
+- `network`: Blockchain network (e.g., "X1 Mainnet")
+- `token_address`: Contract address of the token
 
-### Layer 4: Self-Improvement Loop
-
-Analyzes everything to make the bot better over time:
-
-- **Error patterns** → "This API call fails every day at 3am — add retry logic"
-- **User corrections** → "You keep fixing the risk score — update the scoring logic"
-- **Gate decisions** → "You always approve deploys — lower the risk level"
-- **Unmatched messages** → "People keep asking for 'price check' — add a route"
-- **Unused routes** → "Nobody uses /review — remove it or fix the patterns"
-
-Generates proposals you approve/reject via Telegram:
-
-```
-/proposals                    — view pending proposals
-/propose approve abc123       — approve a proposal
-/propose reject abc123        — reject a proposal
-/correct token-audit reason   — record a manual correction
-/improve                      — run analysis now
-/trend                        — show improvement over time
+**Example Request:**
+```javascript
+fetch('https://api.xdex.xyz/api/token-price/price?network=X1+Mainnet&token_address=81LkybSBLvXYMTF6azXohUWyBvDGUXznm4yiXPkYkDTJ')
 ```
 
-## Project Structure
-
-```
-your-bot-project/
-├── src/
-│   ├── error-logger.js            — Core error capture, classify, hash, query
-│   ├── self-audit.js              — Scheduled error analysis + health reports
-│   ├── workflow-router.js         — Pattern matching router + analytics
-│   ├── routes.js                  — Pre-built route definitions (edit these)
-│   ├── bot.js                     — Telegram bot wiring (main entry point)
-│   ├── verification-gates.js      — Two-gate plan/verify system
-│   ├── gate-telegram-ui.js        — Telegram UI for gate approvals
-│   ├── self-improvement-loop.js   — Pattern analysis + proposal generation
-│   ├── improvement-telegram-ui.js — Telegram UI for proposals/corrections
-│   └── integration-examples.js    — Drop-in examples for your skills
-├── tests/
-│   ├── test-logger.js             — 40 tests
-│   ├── test-router.js             — 40 tests
-│   ├── test-gates.js              — 35 tests
-│   └── test-improvement.js        — 37 tests
-├── errors/                        — Daily error logs (gitignored)
-├── audit-trail/                   — Gate decision logs (gitignored)
-├── improvement-data/              — Corrections, proposals, metrics (gitignored)
-├── reports/                       — Self-audit reports (gitignored)
-├── package.json
-├── .gitignore
-└── README.md
-```
-
-## Runtime Data
-
-Code lives on GitHub. Runtime data lives locally and backs up to X1 Vault:
-
-| Directory | Contents | Persisted |
-|-----------|----------|-----------|
-| `errors/` | Daily error logs (JSONL) | Local + Vault backup |
-| `audit-trail/` | Gate approval/rejection decisions | Local + Vault backup |
-| `improvement-data/` | Corrections, proposals, metrics | Local + Vault backup |
-| `reports/` | Self-audit health reports | Local |
-
-## NPM Scripts
-
-```bash
-npm test              # Run error logger tests
-npm run audit         # Run self-audit (7-day lookback)
-npm run audit:30d     # 30-day lookback
-npm run audit:report  # Save audit report to file
-```
-
-## Customization
-
-### Adding a new skill
-
-1. Add a route in `src/routes.js`:
-
-```js
+**Example Response:**
+```json
 {
-  name: 'my-new-skill',
-  patterns: [/^\/mycommand\s+(.+)/i],
-  agent: 'MyAgent',
-  risk: RISK_LEVEL.MEDIUM,
-  handler: async (match, ctx) => {
-    // Your logic here
-    return { result: match[1] };
+  "success": true,
+  "data": {
+    "network": "X1 Mainnet",
+    "token_address": "81LkybSBLvXYMTF6azXohUWyBvDGUXznm4yiXPkYkDTJ",
+    "price": 0.0000026684635877790015,
+    "price_currency": "USD"
   }
 }
 ```
 
-2. The router, error logger, gates, and improvement loop all pick it up automatically.
+### CORS Handling
 
-### Adding a custom verification rule
+The application implements a two-tier approach to handle CORS:
 
-```js
-gates.addRule('deploy', {
-  name: 'tests-must-pass',
-  description: 'Deploy output must confirm tests passed',
-  check: (output) => ({
-    pass: output.testsPassed === true,
-    reason: 'Tests did not pass before deploy'
-  })
-});
-```
+1. **Direct API Call**: Attempts direct fetch from XDEX API
+2. **CORS Proxy Fallback**: Uses `corsproxy.io` if direct call fails
+3. **Mock Data**: Provides sample data if both methods fail
 
-### Recording a correction
-
-When the bot gets something wrong, tell it:
+## 📁 Project Structure
 
 ```
-/correct token-audit Wrong risk score for low-liquidity tokens
+cryptomarket/
+│
+├── crypto-marketplace.html    # Main HTML file with embedded CSS and JS
+├── README.md                   # Project documentation
+│
+└── (Optional future structure)
+    ├── css/
+    │   └── styles.css         # Separate CSS file
+    ├── js/
+    │   └── app.js             # Separate JavaScript file
+    └── assets/
+        └── images/            # Token icons and logos
 ```
 
-After enough corrections on the same pattern, the improvement loop generates a proposal to fix it.
+### Code Organization
 
-## Core Principles
+The single-file application is organized into:
 
-| Principle | How It's Implemented |
-|-----------|---------------------|
-| Wallet-first identity | Every agent action is traceable to a skill + agent |
-| Memory is explicit | Nothing persists unless logged to errors/ or improvement-data/ |
-| Verify before trust | Gates check all outputs against rules before completing |
-| Fail visible | Every error captured with full context, never swallowed |
-| User owns the loop | Auto for low-risk, confirm for high-risk |
-| Skills are composable | Each route exposes clear patterns, risk, and handler |
-| System improves itself | Corrections + errors + analytics → proposals → better bot |
+1. **HTML Structure**: Semantic markup with header, stats, and token list
+2. **CSS Styling**: Modern gradient design with responsive layouts
+3. **JavaScript Logic**:
+   - Token data management
+   - API integration functions
+   - UI rendering functions
+   - Event handlers
+   - Auto-refresh mechanism
 
-## License
+## ⚙️ Configuration
 
-MIT
+### Customizing Networks
+
+To add or modify supported networks, edit the network dropdown in the HTML:
+
+```html
+<select id="networkSelect">
+    <option value="X1 Mainnet">X1 Mainnet</option>
+    <option value="Ethereum">Ethereum</option>
+    <option value="BSC">BSC</option>
+    <option value="Polygon">Polygon</option>
+    <!-- Add more networks here -->
+</select>
+```
+
+### Adjusting Auto-Refresh Interval
+
+Change the refresh interval (default: 30 seconds):
+
+```javascript
+// Auto-refresh every 30 seconds
+setInterval(loadTokenData, 30000); // Change 30000 to desired milliseconds
+```
+
+### Customizing Color Scheme
+
+Modify the gradient colors in the CSS:
+
+```css
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* Change to your preferred colors */
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 1. "Token not found or API error"
+
+**Cause**: CORS restrictions or network issues
+
+**Solutions**:
+- Check browser console (F12) for specific errors
+- Verify token address is correct
+- Ensure you have internet connection
+- Try using a CORS browser extension (for testing only)
+
+#### 2. Data Not Updating
+
+**Cause**: Auto-refresh may be disabled or API is down
+
+**Solutions**:
+- Refresh the page manually
+- Check browser console for errors
+- Verify API endpoint is accessible
+
+#### 3. Styling Issues on Mobile
+
+**Cause**: Browser compatibility or viewport settings
+
+**Solutions**:
+- Clear browser cache
+- Ensure viewport meta tag is present
+- Test on different browsers
+
+### Debug Mode
+
+Open browser DevTools (F12) to see:
+- API responses logged to console
+- Network requests in Network tab
+- Any JavaScript errors in Console tab
+
+## 🚀 Future Enhancements
+
+### Planned Features
+
+- [ ] **Historical Price Charts**: Integration with charting libraries (Chart.js, TradingView)
+- [ ] **Token Favorites**: Save favorite tokens to localStorage
+- [ ] **Price Alerts**: Notify users when price reaches target
+- [ ] **Portfolio Tracker**: Track holdings and calculate P&L
+- [ ] **Multi-language Support**: i18n for global users
+- [ ] **Dark/Light Theme Toggle**: User preference for themes
+- [ ] **Advanced Filters**: Filter by price, volume, change percentage
+- [ ] **Token Details Page**: Comprehensive token information
+- [ ] **Social Integration**: Twitter feeds, news, community links
+- [ ] **Backend API**: Custom backend to handle CORS and caching
+- [ ] **Database Integration**: Store historical data
+- [ ] **User Authentication**: Personal watchlists and settings
+
+### Technical Improvements
+
+- [ ] Separate CSS and JavaScript into individual files
+- [ ] Implement state management (Redux/MobX)
+- [ ] Add unit tests (Jest)
+- [ ] Set up CI/CD pipeline
+- [ ] Add TypeScript for type safety
+- [ ] Implement caching strategy
+- [ ] Add PWA support for offline access
+- [ ] Optimize performance with lazy loading
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how you can help:
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+3. **Commit your changes**
+   ```bash
+   git commit -m 'Add some AmazingFeature'
+   ```
+4. **Push to the branch**
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+5. **Open a Pull Request**
+
+### Contribution Guidelines
+
+- Follow existing code style and formatting
+- Add comments for complex logic
+- Test your changes thoroughly
+- Update documentation as needed
+- Keep commits atomic and well-described
+
+## 📝 License
+
+This project is licensed under the MIT License - see below for details:
+
+```
+MIT License
+
+Copyright (c) 2026 CryptoMarket
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## 📞 Support
+
+For support, questions, or feedback:
+
+- **Email**: support@cryptomarket.com
+- **GitHub Issues**: [Create an issue](https://github.com/yourusername/cryptomarket/issues)
+- **Discord**: Join our community server
+- **Twitter**: [@CryptoMarket](https://twitter.com/cryptomarket)
+
+## 🙏 Acknowledgments
+
+- **XDEX** for providing the API
+- **CoinMarketCap** for design inspiration
+- **The crypto community** for feedback and support
+
+## 📊 Project Stats
+
+- **Lines of Code**: ~450
+- **File Size**: ~15KB
+- **Load Time**: <1 second
+- **Browser Support**: All modern browsers
+- **Mobile Friendly**: Yes
+- **Dependencies**: Zero (vanilla JavaScript)
+
+---
+
+**Built with ❤️ for the crypto community**
+
+*Last Updated: January 2, 2026*
